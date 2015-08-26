@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from django.db import models, IntegrityError
 from django.conf import settings
+from django.core import signing
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
@@ -120,6 +121,12 @@ class EmailConfirmation(InheritedModel, ModelWithCode):
         new_code = cls(user=user)
         new_code.save(force_insert=True)
         return new_code
+
+    def encrypt_data(self, data):
+        return signing.dumps(data, salt=self.code)
+
+    def decrypt_data(self, encrypted_data):
+        return signing.loads(encrypted_data, salt=self.code)
 
     def activate(self):
         self.expired = True
